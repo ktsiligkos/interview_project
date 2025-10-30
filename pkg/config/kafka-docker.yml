@@ -1,0 +1,68 @@
+services:
+  kafka:
+    image: confluentinc/cp-kafka:7.6.1
+    container_name: kafka
+    ports:
+      - "9094:9094"      # external client (host)
+      - "9092:9092"      # internal client (containers)
+    environment:
+      # --- KRaft ---
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_NODE_ID: 1
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka:9093"
+
+      # --- Listeners ---
+      KAFKA_LISTENERS: PLAINTEXT://:9092,EXTERNAL://:9094,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,EXTERNAL://localhost:9094
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+
+      # --- Single-node dev ---
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_NUM_PARTITIONS: 3
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+
+      # --- Required by cp-kafka entrypoint ---
+      CLUSTER_ID: "MkU3OEVBNTcwNTJENDM2Qk"   # keep any stable 22-char base64
+      # (optional belt + suspenders)
+      # KAFKA_CLUSTER_ID: "MkU3OEVBNTcwNTJENDM2Qk"
+
+  kafka-init:
+    image: confluentinc/cp-kafka:7.6.1
+    container_name: kafka-init
+    depends_on:
+      kafka:
+        condition: service_healthy
+    restart: "no"
+    entrypoint: >
+      bash -c '
+      echo "Creating topic company-events..." ;
+      for i in $(seq 1 60); do
+        kafka-topics --create --if-not-exists
+          --topic company-events
+          --partitions 1
+          --replication-factor 1
+          --bootstrap-server kafka:9092 && break || {
+            echo "Broker not ready yet (attempt $$i). Retrying in 2s...";
+            sleep 2;
+          }
+      done ;
+      echo "Done."
+      '
+
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    depends_on:
+      - kafka
+    ports:
+      - "8080:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+      KAFKA_CLUSTERS_0_PROPERTIES_DEFAULT_API_TIMEOUT_MS: "60000"
+      KAFKA_CLUSTERS_0_PROPERTIES_REQUEST_TIMEOUT_MS: "60000"

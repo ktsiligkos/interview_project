@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>XM Companies Service API Docs</title>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css"
+    />
+    <style>
+      body {
+        margin: 0;
+        background: #f5f5f5;
+      }
+      #swagger-ui {
+        max-width: 960px;
+        margin: 0 auto;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="swagger-ui"></div>
+    <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+    <script>
+      const spec = {
+        openapi: "3.0.3",
+        info: {
+          title: "XM Companies Service API",
+          version: "1.0.0",
+          description:
+            "API for managing company records and authenticating users. The service issues JWTs for authenticated operations and publishes company lifecycle events to Kafka.",
+        },
+        servers: [{ url: "http://localhost:8081/api/v1" }],
+        paths: {
+          "/healthz": {
+            get: {
+              summary: "Health probe",
+              description: "Returns the current health status of the service.",
+              responses: {
+                "200": {
+                  description: "Service is healthy.",
+                  content: {
+                    "application/json": {
+                      example: { status: "ok" },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "/login": {
+            post: {
+              summary: "Authenticate user",
+              description: "Authenticates a user and issues a JWT for subsequent requests.",
+              requestBody: {
+                required: true,
+                content: {
+                  "application/json": {
+                    example: {
+                      email: "john_doe@example.com",
+                      password: "12345678",
+                    },
+                  },
+                },
+              },
+              responses: {
+                "200": {
+                  description: "Authentication succeeded.",
+                  content: {
+                    "application/json": {
+                      examples: {
+                        success: {
+                          summary: "Successful authentication",
+                          value: {
+                            status: "success",
+                            token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9",
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+                "400": {
+                  description: "Invalid request payload.",
+                  content: {
+                    "application/json": {
+                      examples: {
+                        malformed: {
+                          summary: "Malformed JSON",
+                          value: { error: "invalid request body" },
+                        },
+                      },
+                    },
+                  },
+                },
+                "401": {
+                  description: "Invalid credentials or token generation failure.",
+                  content: {
+                    "application/json": {
+                      examples: {
+                        invalidCredentials: {
+                          summary: "Failed authentication",
+                          value: { error: "invalid credentials" },
+                        },
+                      },
+                    },
+                  },
+                },
+                "404": {
+                  description: "User not found.",
+                  content: {
+                    "application/json": {
+                      examples: {
+                        notFound: {
+                          summary: "Unknown email",
+                          value: { error: "user not found" },
+                        },
+                      },
+                    },
+                  },
+                },
+                "500": {
+                  description: "Unhandled error during authentication.",
+                  content: {
+                    "application/json": {
+                      examples: {
+                        internal: {
+                          summary: "Unexpected failure",
+                          value: { error: "failed to authenticate" },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "/companies": {
+            post: {
+              summary: "Create company",
+              description: "Creates a new company record.",
+              requestBody: {
+                required: true,
+                content: {
+                  "application/json": {
+                    example: {
+                      name: "Acme Corp",
+                      description: "Leading supplier of ACME components.",
+                      amount_of_employees: 120,
+                      registered: true,
+                      type: "Corporations",
+                    },
+                  },
+                },
+              },
+              responses: {
+                "201": {
+                  description: "Company created.",
+                  content: {
+                    "application/json": {
+                      examples: {
+                        created: {
+                          summary: "Company created successfully",
+                          value: {
+                            id: "4b1cdcf7-1b63-4f0a-b044-6d028af4ec5f",
+                            name: "Acme Corp",
+                            description: "Leading supplier of ACME components.",
+                            amount_of_employees: 120,
+                            registered: true,
+                            type: "Corporations",
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+                "400": {
+                  description: "Invalid request payload or validation failure.",
+                  content: {
+                    "application/json": {
+                      examples: {
+                        invalidBody: {
+                          summary: "Invalid payload",
+                          value: { error: "invalid request body" },
+                        },
+                        validation: {
+                          summary: "Validation error",
+                          value: { error: "name must not be empty" },
+                        },
+                      },
+                    },
+                  },
+                },
+                "409": {
+                  description: "Uniqueness constraint violation.",
+                  content: {
+                    "application/json": {
+                      examples: {
+                        conflict: {
+                          summary: "Duplicate company",
+                          value: { error: "company name already exists" },
+                        },
+                      },
+                    },
+                  },
+                },
+                "500": {
+                  description: "Unhandled error while creating company.",
+                  content: {
+                    "application/json": {
+                      examples: {
+                        internal: {
+                          summary: "Unexpected failure",
+                          value: { error: "failed to create company" },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "/companies/{uuid}": {
+            parameters: [
+              {
+                name: "uuid",
+                in: "path",
+                description: "Company identifier (UUID).",
+                required: true,
+                content: {
+                  "text/plain": {
+                    example: "4b1cdcf7-1b63-4f0a-b044-6d028af4ec5f",
+                  },
+                },
+              },
+            ],
+            get: {
+              summary: "Get company",
+              description: "Retrieves a company by UUID.",
+              responses: {
+                "200": {
+                  description: "Company retrieved successfully.",
+                  content: {
+                    "application/json": {
+                      examples: {
+                        company: {
+                          summary: "Company",
+                          value: {
+                            id: "4b1cdcf7-1b63-4f0a-b044-6d028af4ec5f",
+                            name: "Acme Corp",
+                            description: "Leading supplier of ACME components.",
+                            amount_of_employees: 120,
+                            registered: true,
+                            type: "Corporations",
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+                "404": {
+                  description: "Company not found.",
+                  content: {
+                    "application/json": {
+                      examples: {
+                        notFound: {
+                          summary: "Unknown company",
+                          value: { error: "company not found" },
+                        },
+                      },
+                    },
+                  },
+                },
+                "500": {
+                  description: "Unhandled error while fetching company.",
+                  content: {
+                    "application/json": {
+                      examples: {
+                        internal: {
+                          summary: "Unexpected failure",
+                          value: { error: "failed to fetch company" },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            patch: {
+              summary: "Patch company",
+              description: "Partially updates fields on an existing company.",
+              requestBody: {
+                required: true,
+                content: {
+                  "application/json": {
+                    example: {
+                      name: "ACME North",
+                      description: "Regional office",
+                      amount_of_employees: 40,
+                      registered: false,
+                      type: "Cooperative",
+                    },
+                  },
+                },
+              },
+              responses: {
+                "201": {
+                  description: "Company updated.",
+                  content: {
+                    "application/json": {
+                      examples: {
+                        updated: {
+                          summary: "Update succeeded",
+                          value: { status: "success" },
+                        },
+                      },
+                    },
+                  },
+                },
+                "400": {
+                  description: "Invalid request payload or validation failure.",
+                  content: {
+                    "application/json": {
+                      examples: {
+                        invalidBody: {
+                          summary: "Invalid payload",
+                          value: { error: "invalid request body" },
+                        },
+                        validation: {
+                          summary: "Validation error",
+                          value: { error: "name must not be empty" },
+                        },
+                      },
+                    },
+                  },
+                },
+                "404": {
+                  description: "Company not found.",
+                  content: {
+                    "application/json": {
+                      examples: {
+                        notFound: {
+                          summary: "Unknown company",
+                          value: { error: "company not found" },
+                        },
+                      },
+                    },
+                  },
+                },
+                "409": {
+                  description: "Uniqueness constraint violation.",
+                  content: {
+                    "application/json": {
+                      examples: {
+                        conflict: {
+                          summary: "Duplicate company",
+                          value: { error: "company name already exists" },
+                        },
+                      },
+                    },
+                  },
+                },
+                "500": {
+                  description: "Unhandled error while updating company.",
+                  content: {
+                    "application/json": {
+                      examples: {
+                        internal: {
+                          summary: "Unexpected failure",
+                          value: { error: "failed to update company" },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            delete: {
+              summary: "Delete company",
+              description: "Deletes a company by UUID.",
+              responses: {
+                "200": {
+                  description: "Company deleted.",
+                  content: {
+                    "application/json": {
+                      examples: {
+                        deleted: {
+                          summary: "Delete succeeded",
+                          value: { status: "success" },
+                        },
+                      },
+                    },
+                  },
+                },
+                "404": {
+                  description: "Company not found.",
+                  content: {
+                    "application/json": {
+                      examples: {
+                        notFound: {
+                          summary: "Unknown company",
+                          value: { error: "company not found" },
+                        },
+                      },
+                    },
+                  },
+                },
+                "500": {
+                  description: "Unhandled error while deleting company.",
+                  content: {
+                    "application/json": {
+                      examples: {
+                        internal: {
+                          summary: "Unexpected failure",
+                          value: { error: "failed to delete the company" },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      };
+
+      window.onload = () => {
+        SwaggerUIBundle({
+          spec,
+          dom_id: "#swagger-ui",
+          presets: [SwaggerUIBundle.presets.apis, SwaggerUIBundle.SwaggerUIStandalonePreset],
+          layout: "BaseLayout",
+        });
+      };
+    </script>
+  </body>
+</html>

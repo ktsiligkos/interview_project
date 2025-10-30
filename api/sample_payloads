@@ -1,0 +1,94 @@
+Examples 
+
+// login endpoint
+
+curl --location 'http://localhost:8081/api/v1/login' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMSIsImV4cCI6MTc2MTg0NTk3OSwiaWF0IjoxNzYxODQyMzc5fQ.b9maCmRcLGPo70f_o0C-5uTN2x6IEk9tKPR34i5wHjo' \
+--data-raw '{
+    "email":"john_doe@example.com",
+    "password":"12345678"
+}'
+
+// create success 
+
+curl --location 'http://localhost:8081/api/v1/companies' \
+--header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMSIsImV4cCI6MTc2MTg0NTk3OSwiaWF0IjoxNzYxODQyMzc5fQ.b9maCmRcLGPo70f_o0C-5uTN2x6IEk9tKPR34i5wHjo' \
+--header 'Content-Type: application/json' \
+--data '{
+    "name": "Tech Corp111",
+    "description": "Software development company",
+    "amount_of_employees": 150,
+    "registered": true,
+    "type": "Corporations"
+}'
+
+// create invalid input (missing all required fields)
+
+curl --location 'http://localhost:8081/api/v1/companies' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMSIsImV4cCI6MTc2MTg0NTk3OSwiaWF0IjoxNzYxODQyMzc5fQ.b9maCmRcLGPo70f_o0C-5uTN2x6IEk9tKPR34i5wHjo' \
+--data '{
+    "name": "Comp"
+}'
+
+// create conflict 
+
+curl --location 'http://localhost:8081/api/v1/companies' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMSIsImV4cCI6MTc2MTg0NTk3OSwiaWF0IjoxNzYxODQyMzc5fQ.b9maCmRcLGPo70f_o0C-5uTN2x6IEk9tKPR34i5wHjo' \
+--data '{
+    "name": "Tech Corp111",
+    "description": "Software development company",
+    "amount_of_employees": 150,
+    "registered": true,
+    "type": "Corporations"
+}'
+
+// create validation error (name exceeds 15 characters)
+
+curl --location 'http://localhost:8081/api/v1/companies' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMSIsImV4cCI6MTc2MTg0NTk3OSwiaWF0IjoxNzYxODQyMzc5fQ.b9maCmRcLGPo70f_o0C-5uTN2x6IEk9tKPR34i5wHjo' \
+--data '{
+    "name": "Doctors Without Borders",
+    "description": "Software development company",
+    "amount_of_employees": 150,
+    "registered": true,
+    "type": "Corporations"
+}'
+
+// delete success (uuid is show as an example)
+
+curl --location --request DELETE 'http://localhost:8081/api/v1/companies/370022bb-6f8c-4328-ba0a-10cdbe784dd7' \
+--header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMSIsImV4cCI6MTc2MTg0NTk3OSwiaWF0IjoxNzYxODQyMzc5fQ.b9maCmRcLGPo70f_o0C-5uTN2x6IEk9tKPR34i5wHjo' \
+--data ''
+
+// delete error (wrong uuid)
+
+curl --location --request DELETE 'http://localhost:8081/api/v1/companies/11111' \
+--header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMSIsImV4cCI6MTc2MTg0NTk3OSwiaWF0IjoxNzYxODQyMzc5fQ.b9maCmRcLGPo70f_o0C-5uTN2x6IEk9tKPR34i5wHjo' \
+--data ''
+
+
+// patch success 
+
+curl --location --request PATCH 'http://localhost:8081/api/v1/companies/10ccb512-9325-457c-9151-b4f5ac16d97a' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMSIsImV4cCI6MTc2MTg0NTk3OSwiaWF0IjoxNzYxODQyMzc5fQ.b9maCmRcLGPo70f_o0C-5uTN2x6IEk9tKPR34i5wHjo' \
+--data '{
+    "name": "Comp",
+    "description": "Software development company",
+    "amount_of_employees": 1000
+}'
+
+// patch conflict error (name already exists)
+
+curl --location --request PATCH 'http://localhost:8081/api/v1/companies/10ccb512-9325-457c-9151-b4f5ac16d97a' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMSIsImV4cCI6MTc2MTg0NTk3OSwiaWF0IjoxNzYxODQyMzc5fQ.b9maCmRcLGPo70f_o0C-5uTN2x6IEk9tKPR34i5wHjo' \
+--data '{
+    "name": "MSF",
+    "description": "",
+    "amount_of_employees": 1000
+}'
